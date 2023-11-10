@@ -1,9 +1,16 @@
 import serial.tools.list_ports
+import PySimpleGUI as sg
 
 ports = serial.tools.list_ports.comports() # Reads ports in computer
 serialInst = serial.Serial() # Arduino
 
 portList = [] # List of ports
+
+
+
+"""
+Setup serial connection with Arduino
+"""
 
 # Iterate through the ports and append to list
 print("List of Ports:")
@@ -26,11 +33,31 @@ serialInst.port = portSelected
 serialInst.open()
 
 
-# Read serial from arduino
+
+"""
+Create GUI for live view data
+"""
+# Create layout
+layout = [
+      [sg.Text("Photoresistor Value", key = 'pv')]
+]
+
+# Create the window
+window = sg.Window("Live View Monitor", layout)
+
+
 while True:
+    # Read serial from arduino
     if serialInst.in_waiting:
-          packet = serialInst.readline()
-          print(packet.decode('utf').rstrip('\n'))
+        # Read any event (e.g. End program if user closes window)
+        event, values = window.read(timeout=1) 
+        if event == sg.WIN_CLOSED:
+            break
+
+        packet = serialInst.readline()
+        window['pv']("Photoresistor Value " + packet.decode('utf'))
+        print(packet.decode('utf').rstrip('\n'))
+
+window.close()
 
 
-# Create GUI for live view data
