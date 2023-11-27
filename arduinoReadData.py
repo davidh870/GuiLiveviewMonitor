@@ -4,8 +4,6 @@ import PySimpleGUI as sg
 ports = serial.tools.list_ports.comports() # Reads ports in computer
 serialInst = serial.Serial() # Arduino
 
-
-
 """""""""""""""""""""""""""""""""""""""""
 Create COM PORT LIST AND STRINGS 
 """""""""""""""""""""""""""""""""""""""""
@@ -22,12 +20,25 @@ for port in ports:
 """""""""""""""""""""""""""""""""""""""""
 Create GUI for live view data
 """""""""""""""""""""""""""""""""""""""""
+
+# Graph design and data
+GRAPH_SIZE_X = 400
+GRAPH_SIZE_Y = 1000
+X_VALUE = 0
+Y_VALUE = 0
+PREV_X_VALUE = 0
+PREV_Y_VALUE = 0
+
+
+
+
 # Create layout
 layout = [
     [sg.Text(portListStrings, key='-PORTLIST-')],
-    [sg.Text('Enter Com Port Number', key='-ECPN-'), sg.Combo(portNumList, key='-COMLIST-')],  
+    [sg.Text('Select Com Port Number', key='-SCPN-'), sg.Combo(portNumList, key='-COMLIST-')],  
     [sg.Button('Ok', key='-OK-', bind_return_key=True)],
-    [sg.Text("Photoresistor Value", key='-PV-', visible=False)]
+    [sg.Text("Photoresistor Value", key='-PV-', visible=False)],
+    [sg.Graph(canvas_size=(GRAPH_SIZE_X, GRAPH_SIZE_Y), graph_bottom_left=(0,0), graph_top_right=(GRAPH_SIZE_X, GRAPH_SIZE_Y), background_color='white', key='-GRAPH-')]
 ]
 
 
@@ -36,7 +47,7 @@ window = sg.Window("Live View Monitor", layout)
 """"""""""""""""""""""""""""""""""""""""""
 
 
-
+ 
 
 # Flag to check if connection with ardiuno has been made
 portCreated = False # 
@@ -57,7 +68,7 @@ while True:
             portCreated = True
 
             # Clear out gui to only display live data from arduino
-            window['-ECPN-'].update(visible=False)
+            window['-SCPN-'].update(visible=False)
             window['-COMLIST-'].update(disabled=True, visible=False)
             window['-OK-'].update(disabled=True, visible=False)
             window['-PV-'].update(visible=True)
@@ -74,8 +85,32 @@ while True:
 
             # Retrieve serial packet from arduino and update gui
             packet = serialInst.readline()
-            window['-PV-']("Photoresistor Value " + packet.decode('utf'))
-            print(packet.decode('utf').rstrip('\n')) # Print to terminal
+            PhotoResistorValue = packet.decode('utf')
+            window['-PV-']("Photoresistor Value " + PhotoResistorValue)
+            print(PhotoResistorValue.rstrip('\n')) # Print to terminal
+
+            # Update Y Value 
+            #print(PhotoResistorValue)
+            Y_VALUE = int(float(PhotoResistorValue))
+
+            # If X values is greater than the graph size then reset graph
+            if X_VALUE > GRAPH_SIZE_X:
+                # Shift X Value to the left by 1 pixel
+                #window['-GRAPH-'].Move(-1,0)
+                X_VALUE, PREV_X_VALUE, PREV_Y_VALUE = (0,0,0)
+
+                # Reset Graph 
+                window['-GRAPH-'].erase()
+
+            # Draw Updated Graph
+            window['-GRAPH-'].DrawLine((PREV_X_VALUE, PREV_Y_VALUE), (X_VALUE, Y_VALUE), width=1)
+
+            # Update PREV Value for X, and Y
+            PREV_X_VALUE, PREV_Y_VALUE = (X_VALUE, Y_VALUE)
+
+            # Increment X value one pixel to the right
+            X_VALUE += 1
+
 
 window.close() # Close window once user closes window and exit program
 
