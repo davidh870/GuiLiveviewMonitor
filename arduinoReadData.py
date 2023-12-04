@@ -90,8 +90,11 @@ while True:
             print(PhotoResistorValue.rstrip('\n')) # Print to terminal
 
             # Update Y Value 
-            #print(PhotoResistorValue)
-            Y_VALUE = int(float(PhotoResistorValue))
+            # Tries to get a int from photo resistor. If unique character can't converter give it default value of 0
+            try:
+                Y_VALUE = int(float(PhotoResistorValue))
+            except:
+                Y_VALUE = 0
 
             # If X values is greater than the graph size then reset graph
             if X_VALUE > GRAPH_SIZE_X:
