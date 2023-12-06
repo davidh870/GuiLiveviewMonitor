@@ -1,5 +1,7 @@
 import serial.tools.list_ports
 import PySimpleGUI as sg
+import pandas as pd
+import datetime
 
 ports = serial.tools.list_ports.comports() # Reads ports in computer
 serialInst = serial.Serial() # Arduino
@@ -47,6 +49,15 @@ window = sg.Window("Live View Monitor", layout)
 """"""""""""""""""""""""""""""""""""""""""
 
 
+
+
+"""""""""""""""""""""""""""""""""""""""""
+EXCEL FILE FOR DATA LOG
+"""""""""""""""""""""""""""""""""""""""""
+excel_file = 'datalog.xlsx'
+datalogDF = pd.read_excel(excel_file)
+
+""""""""""""""""""""""""""""""""""""""""""
  
 
 # Flag to check if connection with ardiuno has been made
@@ -87,7 +98,7 @@ while True:
             packet = serialInst.readline()
             PhotoResistorValue = packet.decode('utf')
             window['-PV-']("Photoresistor Value " + PhotoResistorValue)
-            print(PhotoResistorValue.rstrip('\n')) # Print to terminal
+            #print(PhotoResistorValue.rstrip('\n')) # Print to terminal
 
             # Update Y Value 
             # Tries to get a int from photo resistor. If unique character can't converter give it default value of 0
@@ -108,12 +119,19 @@ while True:
             # Draw Updated Graph
             window['-GRAPH-'].DrawLine((PREV_X_VALUE, PREV_Y_VALUE), (X_VALUE, Y_VALUE), width=1)
 
+            # Add values to excel
+            new_row = {'Time': datetime.datetime.now(), 'Photoresistor Value': Y_VALUE}
+            datalogDF.loc[len(datalogDF)] = new_row # Adds new row to excel sheet
+            
+
             # Update PREV Value for X, and Y
             PREV_X_VALUE, PREV_Y_VALUE = (X_VALUE, Y_VALUE)
 
             # Increment X value one pixel to the right
             X_VALUE += 1
 
+# Writes excel sheet with new data when exiting program
+datalogDF.to_excel(excel_file, index=False) 
 
 window.close() # Close window once user closes window and exit program
 
