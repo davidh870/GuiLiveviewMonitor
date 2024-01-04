@@ -1,0 +1,1 @@
+Created a GUI using python to view live data utilizing Arduino as input for data using a serial connection. The GUI allows users to select a COM Port of the connection to be created to read data and view data in a graphical view.  Also includes a feature to data log and save the excel file for later use.
